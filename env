@@ -1,0 +1,13 @@
+# Anthropic API Configuration
+ANTHROPIC_API_KEY=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
+
+# SSH Configuration (Optional)
+SSH_HOST=153.92.9.73
+SSH_PORT=65002
+SSH_USER=u593952036
+SSH_PASSWORD=Minhtriet@2709
+SSH_KEY_PATH=
+
+# Flask Configuration
+FLASK_ENV=production
+DEBUG=False

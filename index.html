@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Chat - AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #0d1117;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .new-chat-btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 16px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: #2ea043;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 8px 12px;
+            background: #161b22;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: #21262d;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0d1117;
+        }
+
+        .header {
+            border-bottom: 1px solid #30363d;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .model-selector {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #161b22;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.online {
+            background: #3fb950;
+        }
+
+        .status-dot.offline {
+            background: #f85149;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .btn-small:hover {
+            background: #21262d;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: #238636;
+            color: white;
+        }
+
+        .message.assistant .message-content {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+        }
+
+        .message-content code {
+            background: #0d1117;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .message-content pre {
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content pre code {
+            padding: 0;
+            background: none;
+        }
+
+        .input-area {
+            border-top: 1px solid #30363d;
+            padding: 16px;
+            background: #0d1117;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: none;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        .message-input::placeholder {
+            color: #6e7681;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #238636;
+            box-shadow: 0 0 0 2px rgba(35, 134, 54, 0.2);
+        }
+
+        .send-btn {
+            background: #238636;
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .send-btn:hover {
+            background: #2ea043;
+        }
+
+        .send-btn:disabled {
+            background: #6e7681;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            gap: 16px;
+            color: #6e7681;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .message-content {
+                max-width: 100%;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #6e7681;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+            <div class="chat-history" id="chatHistory"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Claude Chat</h1>
+                <div class="header-controls">
+                    <select class="model-selector" id="modelSelector">
+                        <option value="claude-opus-4-20250805">Opus (Most Powerful)</option>
+                        <option value="claude-sonnet-4-20250514" selected>Sonnet (Balanced)</option>
+                        <option value="claude-haiku-4-20250507">Haiku (Fast)</option>
+                    </select>
+                    <div class="status-badge">
+                        <span class="status-dot" id="sshStatus"></span>
+                        <span id="sshText">Checking...</span>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-small" onclick="exportChat()">Export</button>
+                        <button class="btn-small" onclick="clearChat()">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="chat-container" id="chatContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <div>No conversations yet</div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea class="message-input" id="messageInput" placeholder="Hỏi Claude bất cứ điều gì..." rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let messages = [];
+        let currentSessionId = 'default-' + Date.now();
+        let isLoading = false;
+
+        // DOM Elements
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const modelSelector = document.getElementById('modelSelector');
+        const sshStatus = document.getElementById('sshStatus');
+        const sshText = document.getElementById('sshText');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSSHStatus();
+            loadChatHistory();
+            setupAutosize();
+            setInterval(checkSSHStatus, 30000); // Check every 30s
+        });
+
+        // Auto-resize textarea
+        function setupAutosize() {
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+
+        // Send message
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isLoading) return;
+
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            isLoading = true;
+            sendBtn.disabled = true;
+
+            // Add user message
+            messages.push({ role: 'user', content: message });
+            displayMessage('user', message);
+
+            try {
+                // Call API
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: messages,
+                        model: modelSelector.value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'API error');
+                }
+
+                const assistantMessage = data.response;
+                messages.push({ role: 'assistant', content: assistantMessage });
+                displayMessage('assistant', assistantMessage);
+
+                // Save history
+                await saveHistory();
+            } catch (error) {
+                displayMessage('assistant', '❌ Error: ' + error.message);
+            } finally {
+                isLoading = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        // Display message
+        function displayMessage(role, content) {
+            if (chatContainer.querySelector('.empty-state')) {
+                chatContainer.innerHTML = '';
+            }
+
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message ' + role;
+
+            const contentEl = document.createElement('div');
+            contentEl.className = 'message-content';
+            
+            // Parse markdown-like formatting
+            content = content
+                .replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+
+            contentEl.innerHTML = content;
+
+            // Highlight code blocks
+            contentEl.querySelectorAll('pre code').forEach(block => {
+                hljs.highlightElement(block);
+            });
+
+            messageEl.appendChild(contentEl);
+            chatContainer.appendChild(messageEl);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Check SSH status
+        async function checkSSHStatus() {
+            try {
+                const response = await fetch('/api/ssh/test');
+                const data = await response.json();
+
+                if (data.success) {
+                    sshStatus.className = 'status-dot online';
+                    sshText.textContent = 'SSH Online';
+                } else {
+                    sshStatus.className = 'status-dot offline';
+                    sshText.textContent = 'SSH Offline';
+                }
+            } catch (error) {
+                sshStatus.className = 'status-dot offline';
+                sshText.textContent = 'SSH Offline';
+            }
+        }
+
+        // Save history
+        async function saveHistory() {
+            try {
+                await fetch('/api/history/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        messages: messages
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to save history:', error);
+            }
+        }
+
+        // Load history
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/history/list');
+                const data = await response.json();
+
+                const historyEl = document.getElementById('chatHistory');
+                if (data.histories && data.histories.length > 0) {
+                    historyEl.innerHTML = data.histories
+                        .map(h => `<div class="history-item" onclick="loadSession('${h.session_id}')">${new Date(h.saved_at).toLocaleDateString()}</div>`)
+                        .join('');
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        // Load session
+        async function loadSession(sessionId) {
+            try {
+                const response = await fetch('/api/history/load/' + sessionId);
+                const data = await response.json();
+
+                if (data.success) {
+                    messages = data.data.messages;
+                    currentSessionId = sessionId;
+                    chatContainer.innerHTML = '';
+                    messages.forEach(msg => {
+                        displayMessage(msg.role, msg.content);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load session:', error);
+            }
+        }
+
+        // New chat
+        function newChat() {
+            messages = [];
+            currentSessionId = 'default-' + Date.now();
+            chatContainer.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><div>No conversations yet</div></div>';
+            messageInput.value = '';
+            messageInput.focus();
+        }
+
+        // Clear chat
+        function clearChat() {
+            if (confirm('Clear all messages?')) {
+                newChat();
+            }
+        }
+
+        // Export chat
+        function exportChat() {
+            const text = messages.map(m => (m.role === 'user' ? 'You: ' : 'Claude: ') + m.content).join('\n\n');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chat-' + new Date().toISOString().split('T')[0] + '.txt';
+            a.click();
+        }
+
+        // Send on Enter (Shift+Enter for newline)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
