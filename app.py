@@ -99,40 +99,53 @@ STYLE:
         except Exception as e:
             return "❌ Error: {}".format(str(e))
     
+    def _is_ssh_connected(self):
+        """Check if SSH connection is still alive"""
+        try:
+            if self.ssh_client is None:
+                return False
+            transport = self.ssh_client.get_transport()
+            return transport is not None and transport.is_active()
+        except Exception:
+            return False
+
     def ssh_execute(self, command):
         """Execute command on remote server"""
         try:
             if not SSH_HOST or not SSH_USER:
                 return "❌ SSH not configured"
-            
-            if not self.ssh_client:
+
+            if not self._is_ssh_connected():
                 self.ssh_client = paramiko.SSHClient()
-                self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                
+                self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
+
                 if SSH_KEY_PATH and os.path.exists(SSH_KEY_PATH):
                     self.ssh_client.connect(
-                        SSH_HOST, 
+                        SSH_HOST,
                         port=SSH_PORT,
-                        username=SSH_USER, 
-                        key_filename=SSH_KEY_PATH, 
+                        username=SSH_USER,
+                        key_filename=SSH_KEY_PATH,
                         timeout=10
                     )
                 else:
                     self.ssh_client.connect(
-                        SSH_HOST, 
+                        SSH_HOST,
                         port=SSH_PORT,
-                        username=SSH_USER, 
-                        password=SSH_PASSWORD, 
+                        username=SSH_USER,
+                        password=SSH_PASSWORD,
                         timeout=10
                     )
-            
+
             stdin, stdout, stderr = self.ssh_client.exec_command(command, timeout=30)
             output = stdout.read().decode('utf-8', errors='ignore')
             error = stderr.read().decode('utf-8', errors='ignore')
-            
+
+            if output and error:
+                return output + "\n" + error
             return output if output else error
-        
+
         except Exception as e:
+            self.ssh_client = None
             return "❌ SSH Error: {}".format(str(e))
     
     def test_ssh(self):
