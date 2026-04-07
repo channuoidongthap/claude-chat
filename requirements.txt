@@ -1,8 +1,7 @@
 Flask==3.0.0
 flask-cors==4.0.0
 python-dotenv==1.0.0
-paramiko==2.7.0
-requests==2.25.1
+paramiko==3.4.0
+requests==2.31.0
 gunicorn==21.2.0
-Werkzeug==2.3.0
-MarkSafe==2.1.1
+Werkzeug==3.0.0
