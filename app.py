@@ -18,7 +18,7 @@ from datetime import datetime
 # ============================================================================
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(dotenv_path='env')
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
